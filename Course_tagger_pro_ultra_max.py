@@ -1,5 +1,4 @@
 import streamlit as st
-from streamlit_extras.no_default_selectbox import selectbox
 import pandas as pd
 from enum import Enum
 
@@ -69,8 +68,7 @@ def main():
     st.write("# :orange[Pursuing minors?]")
     col1, col2 = st.columns([0.9, 0.1])
     col2.link_button("More info", "https://publichealth.jhu.edu/moore-center-for-the-prevention-of-child-sexual-abuse/get-support/resources-for-people-concerned-about-their-own-sexual-thoughts-and-behavior#:~:text=The%20helpline%20is%20open%20on,at%20020%2D667%2D778.", help="Get help", type="primary", disabled=False, use_container_width=False)
-    with col1:
-        minor_course = selectbox("Select your minor", ["CS", "DS", "SC", "DE", "DH", "EC"], help="I don't have respect for people pursuing double minors")
+    minor_course = col1.selectbox("Select your minor", [None, "CS", "DS", "SC", "DE", "DH", "EC"], help="I don't have respect for people pursuing double minors")
     
     if st.checkbox("I am ready for the truth. Give it to me straight to the jaw."):
         with st.expander("An introduction to my guiding principles"):
