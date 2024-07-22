@@ -2,36 +2,37 @@ import streamlit as st
 import pandas as pd
 from enum import Enum
 
-class Grade(Enum):
-    AA = 10
-    AP = 10
-    AB = 9
-    BB = 8
-    BC = 7
-    CC = 6
-    CD = 5
-    DD = 4
-    II = 0
-    FR = 0
-    FF = 0
-    W = 0
-    NP = 0
-    PP = 10
-    Remaining = 9
+Grade = {
+    "AA" : 10, 
+    "AP" : 10, 
+    "AB" : 9, 
+    "BB" : 8, 
+    "BC" : 7, 
+    "CC" : 6, 
+    "CD" : 5, 
+    "DD" : 4, 
+    "II" : 0, 
+    "FR" : 0, 
+    "FF" : 0, 
+    "W" : 0, 
+    "NP" : 0, 
+    "PP" : 10, 
+    "Remaining" : 9}
 
 def sort_by_grade(courses_df):
-  """Sorts a DataFrame by the 'Grade' column using the Grade enum.
+    """Sorts a DataFrame by the 'Grade' column using the Grade enum.
 
-  Args:
-    courses_df: The DataFrame to sort.
+    Args:
+        courses_df: The DataFrame to sort.
 
-  Returns:
-    A new DataFrame sorted by the 'Grade' column in descending order (A to F).
-  """
+    Returns:
+        A new DataFrame sorted by the 'Grade' column in descending order (A to F).
+    """
 
-  # Convert the 'Grade' column to a categorical with ordered=True
-  courses_df['Grade'] = pd.Categorical(courses_df['Grade'].astype(str), ordered=True)
-  return courses_df.sort_values(by='Grade', ascending=True)
+    # Convert the 'Grade' column to a categorical with ordered=True
+    courses_df['Grade'] = pd.Categorical(courses_df['Grade'].astype(str), ordered=True)
+    courses_df['Grade values'] = courses_df['Grade'].map(Grade)
+    return courses_df.sort_values(by='Grade values', ascending=False)
 
 def main():
     st.set_page_config(
@@ -50,7 +51,7 @@ def main():
     uploaded_grades_df = st.data_editor(grades_df, num_rows='dynamic', use_container_width=True, column_config={"Grade": st.column_config.SelectboxColumn(
             "Grade",
             width="medium",
-            options=[grade.name for grade in Grade],
+            options=[grade for grade in Grade.keys()],
             required=True,
         )},
         key = "yaho")
@@ -76,7 +77,8 @@ def main():
             st.markdown("- Completing Minors comes before getting Honors")
             st.markdown("- Trump got the sickest ear piercing in the history of mankind")
             st.markdown("- The institute will only allow a few set of courses to be tagged as Hon/ Minor/ DE. I do not concern myself with such intricacies. I only look at the first two letters of the course code :smile:")
-            st.markdown("- I am very optimistic on your behalf. Any and all of the remaining courses are assumed to fetch you an AB.")  
+            equivalent_course = st.selectbox("I am very optimistic on your behalf. Any and all of the remaining courses are assumed to fetch you an", Grade.keys(), index=2)  
+            Grade["Remaining"] = Grade[equivalent_course]
         
         uploaded_grades_df['Course Code'] = uploaded_grades_df['Course Code'].str.strip()
         uploaded_grades_df['Course Name'] = uploaded_grades_df['Course Name'].str.strip()
@@ -86,6 +88,7 @@ def main():
         final_df = uploaded_grades_df[(uploaded_grades_df['Tag'] != 'Core course') & (uploaded_grades_df['Tag'] != 'HSS elective') & (uploaded_grades_df['Credit/Audit'] == 'C')]
         
         final_df = sort_by_grade(final_df)
+        final_df['Tag'] = None # Resetting the types to None
 
         ## Choosing the Department Electives
         max_de_count = uploaded_credit_req_df.loc[uploaded_credit_req_df['Tag'] == 'Department elective', 'Number of courses'].values[0]
@@ -108,7 +111,7 @@ def main():
         se_count = 0
         non_ee_count = 0
         for index, row in final_df.iterrows():
-            if final_df.at[index, 'Tag'] == '⚡ Department elective':
+            if final_df.at[index, 'Tag'] != None:
                 continue
             if se_count < max_se_count:
                 if row['Course Code'].startswith('EE'): # Course is from EE Dept itself
@@ -123,7 +126,7 @@ def main():
         max_ie_count = uploaded_credit_req_df.loc[uploaded_credit_req_df['Tag'] == 'Institute elective', 'Number of courses'].values[0]
         ie_count = 0
         for index, row in final_df.iterrows():
-            if final_df.at[index, 'Tag'] == '⚡ Department elective' or final_df.at[index, 'Tag'] == '😭 Specialisation elective':
+            if final_df.at[index, 'Tag'] != None:
                 continue
             if ie_count < max_ie_count:
                 if not row['Course Code'].startswith('EE'): # Course is NOT from EE Dept
@@ -134,7 +137,7 @@ def main():
         max_oe_count = uploaded_credit_req_df.loc[uploaded_credit_req_df['Tag'] == 'Open elective', 'Number of courses'].values[0]
         oe_count = 0
         for index, row in final_df.iterrows():
-            if final_df.at[index, 'Tag'] == '⚡ Department elective' or final_df.at[index, 'Tag'] == '😭 Specialisation elective' or final_df.at[index, 'Tag'] == '💸 Institute elective':
+            if final_df.at[index, 'Tag'] != None:
                 continue
             if oe_count < max_oe_count:
                 final_df.at[index, 'Tag'] = '🏳️‍🌈 Open elective'
@@ -142,7 +145,15 @@ def main():
                 
         ## Choosing the Minor Courses
         if minor_course != None:
-            pass #TODO: Look into this
+            max_me_count = 5 # You only need 5 courses per minor
+            me_count = 0
+            for index, row in final_df.iterrows():
+                if final_df.at[index, 'Tag'] != None:
+                    continue
+                if me_count < max_me_count:
+                    if row['Course Code'].startswith(minor_course): 
+                        final_df.at[index, 'Tag'] = '🤓 Minor'
+                        me_count += 1
 
         ## Choosing the Honors Electives
         max_he_count = 4
@@ -150,7 +161,7 @@ def main():
         he_count = 0
         non_ee_count = 0
         for index, row in final_df.iterrows():
-            if final_df.at[index, 'Tag'] == '⚡ Department elective' or final_df.at[index, 'Tag'] == '😭 Specialisation elective' or final_df.at[index, 'Tag'] == '💸 Institute elective' or final_df.at[index, 'Tag'] == '🤓 Minor' or final_df.at[index, 'Tag'] == '🏳️‍🌈 Open elective':
+            if final_df.at[index, 'Tag'] != None:
                 continue
             if he_count < max_he_count:
                 if row['Course Code'].startswith('EE'): # Course is from EE Dept itself
@@ -161,6 +172,7 @@ def main():
                     he_count += 1
                     non_ee_count += 1
 
+        final_df.loc[final_df['Tag'].isnull(), 'Tag'] = "🤡 ALC" # All remaining courses go to ALCs
 
         change_df = st.data_editor(final_df[["Tag", "Course Code", "Course Name", "Grade"]], num_rows='fixed', disabled=["Course Code", "Course Name", "Grade"], column_config={
             "Tag": st.column_config.SelectboxColumn(
@@ -215,7 +227,7 @@ def main():
             if len(change_df[change_df['Tag'] == "🤓 Minor"]) > 0:
                 col_display2.dataframe(change_df[change_df['Tag'] == '🤓 Minor'][["Course Code", "Course Name", "Grade"]], hide_index=True)
             if len(change_df[change_df['Tag'] == '🤓 Minor']) != 5:
-                col_display2.write(":red[You need to complete "+str(5 - len(change_df[change_df['Tag'] == '🤓 Minor']))+" more Minor courses to get the minor]")    
+                col_display2.write(":orange[You need to complete "+str(5 - len(change_df[change_df['Tag'] == '🤓 Minor']))+" more Minor courses to get the minor]")    
             else:
                 col_display2.write(":green[Done with all Minor Courses]")
 
