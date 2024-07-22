@@ -1,3 +1,2 @@
-streamlit_extras
 pandas
 enum
