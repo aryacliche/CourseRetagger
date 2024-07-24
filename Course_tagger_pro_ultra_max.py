@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 from enum import Enum
 
 Grade = {
@@ -85,23 +86,24 @@ def main():
         uploaded_grades_df['Tag'] = uploaded_grades_df['Tag'].str.strip()
         uploaded_grades_df['Grade'] = uploaded_grades_df['Grade'].str.strip()
         uploaded_grades_df['Credit/Audit'] = uploaded_grades_df['Credit/Audit'].str.strip()
-        final_df = uploaded_grades_df[(uploaded_grades_df['Tag'] != 'Core course') & (uploaded_grades_df['Tag'] != 'HSS elective') & (uploaded_grades_df['Credit/Audit'] == 'C')]
-        
-        final_df = sort_by_grade(final_df)
-        final_df['Tag'] = None # Resetting the types to None
+        core_courses_df = uploaded_grades_df[((uploaded_grades_df['Tag'] == 'Core course') | (uploaded_grades_df['Tag'] == 'HSS elective')) & (uploaded_grades_df['Credit/Audit'] == 'C')]
+        electives_df = uploaded_grades_df[(uploaded_grades_df['Tag'] != 'Core course') & (uploaded_grades_df['Tag'] != 'HSS elective') & (uploaded_grades_df['Credit/Audit'] == 'C')]
+
+        electives_df = sort_by_grade(electives_df)
+        electives_df['Tag'] = None # Resetting the types to None
 
         ## Choosing the Department Electives
         max_de_count = uploaded_credit_req_df.loc[uploaded_credit_req_df['Tag'] == 'Department elective', 'Number of courses'].values[0]
         max_non_ee_count = uploaded_constraints_df.loc[uploaded_constraints_df['Tag'] == 'Department elective', 'Number of non-department courses allowed'].values[0]
         de_count = 0
         non_ee_count = 0
-        for index, row in final_df.iterrows():
+        for index, row in electives_df.iterrows():
             if de_count < max_de_count:
                 if row['Course Code'].startswith('EE'): # Course is from EE Dept itself
-                    final_df.at[index, 'Tag'] = '⚡ Department elective'
+                    electives_df.at[index, 'Tag'] = '⚡ Department elective'
                     de_count += 1
                 elif non_ee_count < max_non_ee_count:
-                    final_df.at[index, 'Tag'] = '⚡ Department elective'
+                    electives_df.at[index, 'Tag'] = '⚡ Department elective'
                     de_count += 1
                     non_ee_count += 1
 
@@ -110,49 +112,49 @@ def main():
         max_non_ee_count = uploaded_constraints_df.loc[uploaded_constraints_df['Tag'] == 'Specialisation elective', 'Number of non-department courses allowed'].values[0]
         se_count = 0
         non_ee_count = 0
-        for index, row in final_df.iterrows():
-            if final_df.at[index, 'Tag'] != None:
+        for index, row in electives_df.iterrows():
+            if electives_df.at[index, 'Tag'] != None:
                 continue
             if se_count < max_se_count:
                 if row['Course Code'].startswith('EE'): # Course is from EE Dept itself
-                    final_df.at[index, 'Tag'] = '😭 Specialisation elective'
+                    electives_df.at[index, 'Tag'] = '😭 Specialisation elective'
                     se_count += 1
                 elif non_ee_count < max_non_ee_count:
-                    final_df.at[index, 'Tag'] = '😭 Specialisation elective'
+                    electives_df.at[index, 'Tag'] = '😭 Specialisation elective'
                     se_count += 1
                     non_ee_count += 1
 
         ## Choosing the Institute Electives
         max_ie_count = uploaded_credit_req_df.loc[uploaded_credit_req_df['Tag'] == 'Institute elective', 'Number of courses'].values[0]
         ie_count = 0
-        for index, row in final_df.iterrows():
-            if final_df.at[index, 'Tag'] != None:
+        for index, row in electives_df.iterrows():
+            if electives_df.at[index, 'Tag'] != None:
                 continue
             if ie_count < max_ie_count:
                 if not row['Course Code'].startswith('EE'): # Course is NOT from EE Dept
-                    final_df.at[index, 'Tag'] = '💸 Institute elective'
+                    electives_df.at[index, 'Tag'] = '💸 Institute elective'
                     ie_count += 1
 
         ## Choosing the Open Electives
         max_oe_count = uploaded_credit_req_df.loc[uploaded_credit_req_df['Tag'] == 'Open elective', 'Number of courses'].values[0]
         oe_count = 0
-        for index, row in final_df.iterrows():
-            if final_df.at[index, 'Tag'] != None:
+        for index, row in electives_df.iterrows():
+            if electives_df.at[index, 'Tag'] != None:
                 continue
             if oe_count < max_oe_count:
-                final_df.at[index, 'Tag'] = '🏳️‍🌈 Open elective'
+                electives_df.at[index, 'Tag'] = '🏳️‍🌈 Open elective'
                 oe_count += 1
                 
         ## Choosing the Minor Courses
         if minor_course != None:
             max_me_count = 5 # You only need 5 courses per minor
             me_count = 0
-            for index, row in final_df.iterrows():
-                if final_df.at[index, 'Tag'] != None:
+            for index, row in electives_df.iterrows():
+                if electives_df.at[index, 'Tag'] != None:
                     continue
                 if me_count < max_me_count:
                     if row['Course Code'].startswith(minor_course): 
-                        final_df.at[index, 'Tag'] = '🤓 Minor'
+                        electives_df.at[index, 'Tag'] = '🤓 Minor'
                         me_count += 1
 
         ## Choosing the Honors Electives
@@ -160,21 +162,21 @@ def main():
         max_non_ee_count = uploaded_constraints_df.loc[uploaded_constraints_df['Tag'] == 'Honors elective', 'Number of non-department courses allowed'].values[0]
         he_count = 0
         non_ee_count = 0
-        for index, row in final_df.iterrows():
-            if final_df.at[index, 'Tag'] != None:
+        for index, row in electives_df.iterrows():
+            if electives_df.at[index, 'Tag'] != None:
                 continue
             if he_count < max_he_count:
                 if row['Course Code'].startswith('EE'): # Course is from EE Dept itself
-                    final_df.at[index, 'Tag'] = '🫡 Honor elective'
+                    electives_df.at[index, 'Tag'] = '🫡 Honor elective'
                     he_count += 1
                 elif non_ee_count < max_non_ee_count:
-                    final_df.at[index, 'Tag'] = '🫡 Honor elective'
+                    electives_df.at[index, 'Tag'] = '🫡 Honor elective'
                     he_count += 1
                     non_ee_count += 1
 
-        final_df.loc[final_df['Tag'].isnull(), 'Tag'] = "🤡 ALC" # All remaining courses go to ALCs
+        electives_df.loc[electives_df['Tag'].isnull(), 'Tag'] = "🤡 ALC" # All remaining courses go to ALCs
 
-        change_df = st.data_editor(final_df[["Tag", "Course Code", "Course Name", "Grade"]], num_rows='fixed', disabled=["Course Code", "Course Name", "Grade"], column_config={
+        change_df = st.data_editor(electives_df[["Tag", "Course Code", "Course Name", "Credits", "Grade"]], num_rows='fixed', disabled=["Course Code", "Course Name", "Credits", "Grade"], column_config={
             "Tag": st.column_config.SelectboxColumn(
             "Tag",
             width="medium",
@@ -192,7 +194,7 @@ def main():
         })
         col_display1, col_display2, col_display3 = st.columns(3)
         col_display1.write("## :violet[Department Electives]")
-        col_display1.dataframe(change_df[change_df['Tag'] == '⚡ Department elective'][["Course Code", "Course Name", "Grade"]], hide_index=True)
+        col_display1.dataframe(change_df[change_df['Tag'] == '⚡ Department elective'][["Course Code", "Course Name", "Credits", "Grade"]], hide_index=True)
         if max_de_count != len(change_df[change_df['Tag'] == '⚡ Department elective']):
             col_display1.write(":red[You need to complete "+str(max_de_count - len(change_df[change_df['Tag'] == '⚡ Department elective']))+" more DEs to graduate]")    
         else:
@@ -200,7 +202,7 @@ def main():
 
         col_display2.write("## :violet[Specialisation Electives]")
         if len(change_df[change_df['Tag'] == '😭 Specialisation elective']) > 0:
-            col_display2.dataframe(change_df[change_df['Tag'] == '😭 Specialisation elective'][["Course Code", "Course Name", "Grade"]], hide_index=True)
+            col_display2.dataframe(change_df[change_df['Tag'] == '😭 Specialisation elective'][["Course Code", "Course Name", "Credits", "Grade"]], hide_index=True)
         if max_se_count != len(change_df[change_df['Tag'] == '😭 Specialisation elective']):
             col_display2.write(":red[You need to complete "+str(max_se_count - len(change_df[change_df['Tag'] == '😭 Specialisation elective']))+" more SEs to graduate]")    
         else:
@@ -208,7 +210,7 @@ def main():
 
         col_display3.write("## :violet[Institute Electives]")
         if len(change_df[change_df['Tag'] == "💸 Institute elective"]) > 0:
-            col_display3.dataframe(change_df[change_df['Tag'] == '💸 Institute elective'][["Course Code", "Course Name", "Grade"]], hide_index=True)
+            col_display3.dataframe(change_df[change_df['Tag'] == '💸 Institute elective'][["Course Code", "Course Name", "Credits", "Grade"]], hide_index=True)
         if max_ie_count != len(change_df[change_df['Tag'] == '💸 Institute elective']):
             col_display3.write(":red[You need to complete "+str(max_ie_count - len(change_df[change_df['Tag'] == '💸 Institute elective']))+" more IEs to graduate]")    
         else:
@@ -216,7 +218,7 @@ def main():
 
         col_display1.write("## :violet[Open Electives]")
         if len(change_df[change_df['Tag'] == "🏳️‍🌈 Open elective"]) > 0:
-            col_display1.dataframe(change_df[change_df['Tag'] == '🏳️‍🌈 Open elective'][["Course Code", "Course Name", "Grade"]], hide_index=True)
+            col_display1.dataframe(change_df[change_df['Tag'] == '🏳️‍🌈 Open elective'][["Course Code", "Course Name", "Credits", "Grade"]], hide_index=True)
         if max_oe_count != len(change_df[change_df['Tag'] == '🏳️‍🌈 Open elective']):
             col_display1.write(":red[You need to complete "+str(max_oe_count - len(change_df[change_df['Tag'] == '🏳️‍🌈 Open elective']))+" more IEs to graduate]")    
         else:
@@ -225,7 +227,7 @@ def main():
         if minor_course != None:
             col_display2.write("## :violet[Minor Electives]")
             if len(change_df[change_df['Tag'] == "🤓 Minor"]) > 0:
-                col_display2.dataframe(change_df[change_df['Tag'] == '🤓 Minor'][["Course Code", "Course Name", "Grade"]], hide_index=True)
+                col_display2.dataframe(change_df[change_df['Tag'] == '🤓 Minor'][["Course Code", "Course Name", "Credits", "Grade"]], hide_index=True)
             if len(change_df[change_df['Tag'] == '🤓 Minor']) != 5:
                 col_display2.write(":orange[You need to complete "+str(5 - len(change_df[change_df['Tag'] == '🤓 Minor']))+" more Minor courses to get the minor]")    
             else:
@@ -233,14 +235,37 @@ def main():
 
         col_display3.write("## :violet[Honors Electives]")
         if len(change_df[change_df['Tag'] == "🫡 Honor elective"]) > 0:
-            col_display3.dataframe(change_df[change_df['Tag'] == '🫡 Honor elective'][["Course Code", "Course Name", "Grade"]], hide_index=True)
+            col_display3.dataframe(change_df[change_df['Tag'] == '🫡 Honor elective'][["Course Code", "Course Name", "Credits", "Grade"]], hide_index=True)
         if max_he_count != len(change_df[change_df['Tag'] == '🫡 Honor elective']):
             col_display3.write("You need to complete "+str(max_he_count - len(change_df[change_df['Tag'] == '🫡 Honor elective']))+" more Honors Electives to get honors")    
         else:
             col_display3.write(":green[You can pass out with honors : )]")
 
+        core_grade_cumulative_earned = sum(core_courses_df["Credits"]* core_courses_df['Grade'].map(Grade))
+        
+        total_credits = sum(core_courses_df["Credits"]) + sum(electives_df[(electives_df['Tag'] == '⚡ Department elective') | (electives_df['Tag'] == '💸 Institute elective') | (electives_df['Tag'] == '🏳️‍🌈 Open elective') | (electives_df['Tag'] == '😭 Specialisation elective')]["Credits"])
+        
 
-
+        original_elective_grade_cumulative = np.sum(
+                np.multiply(
+                    electives_df[(electives_df['Tag'] == '⚡ Department elective') | (electives_df['Tag'] == '💸 Institute elective') | (electives_df['Tag'] == '🏳️‍🌈 Open elective') | (electives_df['Tag'] == '😭 Specialisation elective')]['Grade'].map(Grade).to_numpy(),
+                    electives_df[(electives_df['Tag'] == '⚡ Department elective') | (electives_df['Tag'] == '💸 Institute elective') | (electives_df['Tag'] == '🏳️‍🌈 Open elective') | (electives_df['Tag'] == '😭 Specialisation elective')]["Credits"].to_numpy()
+                )
+            )
+        total_grade_cumulative = core_grade_cumulative_earned + original_elective_grade_cumulative
+        original_cpi = total_grade_cumulative/total_credits
+        
+        total_credits = sum(core_courses_df["Credits"]) + sum(change_df[(change_df['Tag'] == '⚡ Department elective') | (change_df['Tag'] == '💸 Institute elective') | (change_df['Tag'] == '🏳️‍🌈 Open elective') | (change_df['Tag'] == '😭 Specialisation elective')]["Credits"])
+        changed_elective_grade_cumulative = np.sum(
+            np.multiply(
+                change_df[(change_df['Tag'] == '⚡ Department elective') | (change_df['Tag'] == '💸 Institute elective') | (change_df['Tag'] == '🏳️‍🌈 Open elective') | (change_df['Tag'] == '😭 Specialisation elective')]["Credits"].to_numpy(), 
+                change_df[(change_df['Tag'] == '⚡ Department elective') | (change_df['Tag'] == '💸 Institute elective') | (change_df['Tag'] == '🏳️‍🌈 Open elective') | (change_df['Tag'] == '😭 Specialisation elective')]['Grade'].map(Grade).to_numpy()
+            )
+        )
+        total_grade_cumulative = core_grade_cumulative_earned + changed_elective_grade_cumulative
+        new_cpi = total_grade_cumulative/total_credits
+        st.metric("CPI", round(total_grade_cumulative/total_credits, 2), delta = new_cpi - original_cpi)
+        st.write(f"### :violet[Main CPI credits] = {int(total_credits)}")
 
 if __name__ == "__main__":
     main()
