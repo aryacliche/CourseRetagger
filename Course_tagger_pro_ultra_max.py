@@ -29,9 +29,6 @@ def sort_by_grade(courses_df):
     Returns:
         A new DataFrame sorted by the 'Grade' column in descending order (A to F).
     """
-
-    # Convert the 'Grade' column to a categorical with ordered=True
-    courses_df['Grade'] = pd.Categorical(courses_df['Grade'].astype(str), ordered=True)
     courses_df['Grade values'] = courses_df['Grade'].map(Grade)
     return courses_df.sort_values(by='Grade values', ascending=False)
 
