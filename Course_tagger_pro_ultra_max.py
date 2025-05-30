@@ -48,11 +48,11 @@ def main():
 
     col_first, col_second = st.columns(2)
     col_first.markdown('# :orange[Upload your courses]')
-    col_second.link_button('Tutorial', 'https://youtu.be/g5-WJ-7ieOU')
+    col_second.link_button('Tutorial', 'https://youtu.be/BPbUz2XLQE0')
     st.write('Upload your portal.iitb.ac.in output here')
     grades_df = pd.DataFrame({'Course Code': ['EE 113 (D1)'], 'Course Name': ['	Introduction to Electrical Engineering Practice'], 'Credits': [
                              6], 'Tag': ['Core Course'], 'Grade': ['DD'], 'Credit/Audit': ['C']})
-    uploaded_grades_df = st.data_editor(grades_df, num_rows='dynamic', use_container_width=True, column_config={'Grade': st.column_config.SelectboxColumn(
+    provided_grades_df = st.data_editor(grades_df, num_rows='dynamic', use_container_width=True, column_config={'Grade': st.column_config.SelectboxColumn(
         'Grade',
         width='medium',
         options=[grade for grade in Grade.keys()],
@@ -82,6 +82,14 @@ def main():
                                   None, 'CS', 'DS', 'SC', 'DE', 'DH', 'EC'], help="I don't have respect for people pursuing double minors")
 
     if st.checkbox('I am ready for the truth. Give it straight to the jaw.'):
+        # Remove rows with any missing (NaN or empty string) values in required columns
+        required_cols = ['Course Code', 'Course Name', 'Credits', 'Tag', 'Grade', 'Credit/Audit']
+        uploaded_grades_df = provided_grades_df
+        uploaded_grades_df = uploaded_grades_df.dropna(subset=required_cols)
+        for col in required_cols:
+            if uploaded_grades_df[col].dtype == object:
+                uploaded_grades_df = uploaded_grades_df[uploaded_grades_df[col].str.strip() != '']
+        
         with st.expander('An introduction to my guiding principles'):
             st.markdown('- Main-CPImaxxing is the goal of every retagger')
             st.markdown('- Completing Minors comes before getting Honors')
@@ -314,7 +322,7 @@ def main():
 
         st.divider()
         st.metric('CPI', round(total_grade_cumulative /
-                  total_credits, 2), delta=new_cpi - original_cpi)
+                  total_credits, 2), delta=round(new_cpi - original_cpi, 2))
         st.write(f"### :violet[Main CPI credits] = {int(total_credits)}")
         try:
             st.image("https://raw.githubusercontent.com/aryacliche/CourseRetagger/refs/heads/main/images%20(2).jpeg", caption="At least you're graduating, eventually") 
