@@ -311,10 +311,20 @@ def main():
         total_grade_cumulative = core_grade_cumulative_earned + \
             changed_elective_grade_cumulative
         new_cpi = total_grade_cumulative/total_credits
+
+        st.divider()
         st.metric('CPI', round(total_grade_cumulative /
                   total_credits, 2), delta=new_cpi - original_cpi)
         st.write(f"### :violet[Main CPI credits] = {int(total_credits)}")
-        st.image("https://raw.githubusercontent.com/aryacliche/CourseRetagger/refs/heads/main/images%20(2).jpeg", caption="At least you're graduating, eventually") 
+        try:
+            st.image("https://raw.githubusercontent.com/aryacliche/CourseRetagger/refs/heads/main/images%20(2).jpeg", caption="At least you're graduating, eventually") 
+        except:
+            st.link_button("At least you're graduating ... eventually", "https://raw.githubusercontent.com/aryacliche/CourseRetagger/refs/heads/main/images%20(2).jpeg")
+        
+        st.divider()
+        st.slider("How satisfied are you with this app?", 0, 100, 75)
+        if (st.button("Done")):
+            st.write("Literally couldn't give lesser shits")
 
 
 if __name__ == '__main__':
