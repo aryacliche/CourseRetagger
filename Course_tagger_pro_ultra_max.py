@@ -64,7 +64,7 @@ def main():
     st.write('Refer to internal ASC>Academic>All About Courses>View Course Curriculum')
     st.write('The app assumes all courses have to be 6 credit')
     credit_req_df = pd.DataFrame({'Tag': ['Department elective', 'Institute elective',
-                                 'Specialisation elective', 'Open elective'], 'Number of courses': [6, 2, 0, 1]})
+                                 'Specialisation elective', 'Open elective'], 'Number of courses': [7, 2, 0, 1]})
     uploaded_credit_req_df = st.data_editor(credit_req_df, num_rows='fixed', use_container_width=False, disabled=[
                                             'Tag'], key='nuhuh', hide_index=True)
 
@@ -81,16 +81,15 @@ def main():
     minor_course = col1.selectbox('Select your minor', [
                                   None, 'CS', 'DS', 'SC', 'DE', 'DH', 'EC'], help="I don't have respect for people pursuing double minors")
 
-    if st.checkbox('I am ready for the truth. Give it to me straight to the jaw.'):
+    if st.checkbox('I am ready for the truth. Give it straight to the jaw.'):
         with st.expander('An introduction to my guiding principles'):
-            st.markdown('- Main CPImaxxing is the goal of every retagger')
+            st.markdown('- Main-CPImaxxing is the goal of every retagger')
             st.markdown('- Completing Minors comes before getting Honors')
-            st.markdown(
-                '- Trump got the sickest ear piercing in the history of mankind')
+            st.markdown('- Trump got the sickest ear piercing in the history of mankind')
             st.markdown('- The institute will only allow a few set of courses to be tagged as Hon/ Minor/ DE. I do not concern myself with such intricacies. I only look at the first two letters of the course code :smile:')
             st.markdown("- You are allowed to speculate your CPI based on courses which are not yet complete. Just tag them as 'Remaining' and then use the dropdown to select the grade you think you will get")
             equivalent_course = st.selectbox(
-                'Any and all of the remaining courses are assumed to fetch you an', Grade.keys(), index=2)
+                'All of the *Remaining* courses are assumed to fetch you an', Grade.keys(), index=2)
             Grade['Remaining'] = Grade[equivalent_course]
 
         uploaded_grades_df['Course Code'] = uploaded_grades_df['Course Code'].str.strip(
@@ -315,6 +314,7 @@ def main():
         st.metric('CPI', round(total_grade_cumulative /
                   total_credits, 2), delta=new_cpi - original_cpi)
         st.write(f"### :violet[Main CPI credits] = {int(total_credits)}")
+        st.image("amrish.jpg", caption="At least you're graduating, eventually") 
 
 
 if __name__ == '__main__':
