@@ -314,7 +314,7 @@ def main():
         st.metric('CPI', round(total_grade_cumulative /
                   total_credits, 2), delta=new_cpi - original_cpi)
         st.write(f"### :violet[Main CPI credits] = {int(total_credits)}")
-        st.image("amrish.jpg", caption="At least you're graduating, eventually") 
+        st.image("images (2).jpeg", caption="At least you're graduating, eventually") 
 
 
 if __name__ == '__main__':
